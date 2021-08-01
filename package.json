@@ -4,17 +4,17 @@
   "description": "Simple Redis DI factory for Ts.ED framework",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
+  "author": "Alex Do <alexdonh@gmail.com>",
   "scripts": {
     "build": "yarn clean && yarn tsc",
     "clean": "rm -rf dist/",
     "tsc": "tsc --project tsconfig.compile.json",
     "tsc:w": "tsc --project tsconfig.json -w",
     "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix"
+    "lint:fix": "eslint src --ext .ts --fix",
+    "prepare": "yarn build"
   },
-  "dependencies": {
-    
-  },
+  "dependencies": {},
   "devDependencies": {
     "@tsed/common": "^6.62.0",
     "@tsed/core": "^6.62.0",
