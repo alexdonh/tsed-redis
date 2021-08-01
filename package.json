@@ -2,9 +2,12 @@
   "name": "tsed-redis",
   "version": "0.0.1",
   "description": "Simple Redis DI factory for Ts.ED framework",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
   "author": "Alex Do <alexdonh@gmail.com>",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "yarn clean && yarn tsc",
     "clean": "rm -rf dist/",
@@ -12,7 +15,7 @@
     "tsc:w": "tsc --project tsconfig.json -w",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
-    "prepare": "yarn build"
+    "prepare": "npm run build"
   },
   "dependencies": {},
   "devDependencies": {
