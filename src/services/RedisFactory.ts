@@ -1,26 +1,41 @@
+import {isArray} from "@tsed/core";
 import {Configuration, registerProvider} from "@tsed/di";
-import {Logger} from "@tsed/logger";
-import redis, {RedisClient} from "redis";
 import type {RedisOptions} from "../interfaces";
+import {RedisService} from "./RedisService";
+
+export const REDIS_CONNECTIONS = Symbol.for("REDIS_CONNECTIONS");
+export type REDIS_CONNECTIONS = RedisService;
+
+function mapOptions(options: Omit<RedisOptions, "id"> | RedisOptions[]): RedisOptions[] {
+  if (!options) {
+    return [];
+  }
+
+  if (!isArray(options)) {
+    return [
+      {
+        id: "default",
+        ...options
+      }
+    ];
+  }
+
+  return options;
+}
 
 registerProvider({
-  provide: RedisClient,
-  deps: [Logger, Configuration],
-  useFactory(logger: Logger, config: Configuration): RedisClient {
-    const options = config.get<RedisOptions>("redis", {} as RedisOptions);
+  provide: REDIS_CONNECTIONS,
+  injectable: false,
+  deps: [Configuration, RedisService],
+  async useAsyncFactory(config: Configuration, redisService: RedisService): Promise<RedisService> {
+    const options = mapOptions(config.get<Omit<RedisOptions, "id"> | RedisOptions[]>("redis"));
+    let isDefault = true;
 
-    logger.info("Connect to redis server");
-    logger.debug(`Options: ${JSON.stringify(options)}`);
-
-    try {
-      const client = redis.createClient(options);
-      client.on("ready", () => {
-        logger.info("Redis server is ready");
-      });
-      return client;
-    } catch (err) {
-      logger.error(err);
-      process.exit();
+    for (const current of options) {
+      await redisService.connect(current.id, current, isDefault);
+      isDefault = false;
     }
+
+    return redisService;
   }
 });
