@@ -15,7 +15,7 @@
     "tsc:w": "tsc --project tsconfig.json -w",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
-    "prepare": "npm run build"
+    "prepare": "yarn build"
   },
   "dependencies": {
     "redis": "^3.0.2"
