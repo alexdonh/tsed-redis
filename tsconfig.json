@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es2019",
+    "target": "es2020",
     "sourceMap": true,
     "declaration": false,
     "experimentalDecorators": true,
@@ -20,7 +20,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "lib": [
-      "ES2019",
+      "ES2020",
       "esnext.asynciterable"
     ],
     "typeRoots": [
@@ -32,13 +32,13 @@
   ],
   "exclude": [
     "node_modules",
-    "dist",
+    "lib",
     "test"
   ],
   "linterOptions": {
     "exclude": [
       "node_modules",
-      "dist",
+      "lib",
       "test"
     ]
   }

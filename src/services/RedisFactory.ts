@@ -1,12 +1,14 @@
 import {isArray} from "@tsed/core";
 import {Configuration, registerProvider} from "@tsed/di";
-import type {RedisOptions} from "../interfaces";
+import {Logger} from "@tsed/logger";
+import {RedisClientOptions} from "redis";
+import type {RedisClientOptionsWithId} from "../interfaces";
 import {RedisService} from "./RedisService";
 
 export const REDIS_CONNECTIONS = Symbol.for("REDIS_CONNECTIONS");
 export type REDIS_CONNECTIONS = RedisService;
 
-function mapOptions(options: Omit<RedisOptions, "id"> | RedisOptions[]): RedisOptions[] {
+function mapOptions(options: RedisClientOptions | RedisClientOptionsWithId[]): RedisClientOptionsWithId[] {
   if (!options) {
     return [];
   }
@@ -26,9 +28,9 @@ function mapOptions(options: Omit<RedisOptions, "id"> | RedisOptions[]): RedisOp
 registerProvider({
   provide: REDIS_CONNECTIONS,
   injectable: false,
-  deps: [Configuration, RedisService],
-  async useAsyncFactory(config: Configuration, redisService: RedisService): Promise<RedisService> {
-    const options = mapOptions(config.get<Omit<RedisOptions, "id"> | RedisOptions[]>("redis"));
+  deps: [Configuration, Logger, RedisService],
+  async useAsyncFactory(config: Configuration, logger: Logger, redisService: RedisService): Promise<RedisService> {
+    const options = mapOptions(config.get<RedisClientOptions | RedisClientOptionsWithId[]>("redis"));
     let isDefault = true;
 
     for (const current of options) {

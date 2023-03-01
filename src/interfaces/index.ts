@@ -1,11 +1,11 @@
-import type {ClientOpts} from "redis";
+import type {RedisClientOptions} from "redis";
 
-export type RedisOptions = ClientOpts & {id: string; user?: string};
+export type RedisClientOptionsWithId = RedisClientOptions & {id: string};
 
 declare global {
   namespace TsED {
     interface Configuration {
-      redis?: Omit<RedisOptions, "id"> | RedisOptions[];
+      redis?: RedisClientOptions | RedisClientOptionsWithId[];
     }
   }
 }
