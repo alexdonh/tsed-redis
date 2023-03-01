@@ -2,6 +2,7 @@
   "name": "tsed-redis",
   "version": "0.1.2",
   "description": "Simple Redis DI factory for Ts.ED framework",
+  "keywords": ["tsed", "redis", "dependency", "injection", "di", "typescript"],
   "author": "Alex Do <alexdonh@gmail.com>",
   "source": "src/index.ts",
   "main": "lib/cjs/index.js",
@@ -18,6 +19,14 @@
     "LICENSE",
     "README.md"
   ],
+  "repository": "https://github.com/alexdonh/tsed-redis",
+  "bugs": {
+    "url": "https://github.com/alexdonh/tsed-redis/issues"
+  },
+  "homepage": "https://github.com/alexdonh/tsed-redis#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "build": "yarn clean && yarn build:esm && yarn build:cjs",
     "clean": "rm -rf lib/",
