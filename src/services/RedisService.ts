@@ -1,10 +1,10 @@
-import {Constant, Inject, Service} from "@tsed/di";
+import {Constant, Inject, OnDestroy, Service} from "@tsed/di";
 import {Logger} from "@tsed/logger";
 import {createClient, RedisClientOptions, RedisClientType} from "redis";
 import type {RedisClientOptionsWithId} from "../interfaces";
 
 @Service()
-export class RedisService {
+export class RedisService implements OnDestroy {
   private readonly clients: Map<string, RedisClientType> = new Map();
   private defaultConnection: string = "default";
 
@@ -13,6 +13,11 @@ export class RedisService {
 
   @Constant("redis")
   redisOptions: RedisClientOptions | RedisClientOptionsWithId[];
+
+
+  async $onDestroy() {
+    await this.close();
+  }
 
   async connect(id: string, options: RedisClientOptions, isDefault: boolean = false): Promise<RedisClientType> {
     let client = this.get(id);
@@ -60,9 +65,7 @@ export class RedisService {
   }
 
   async close() {
-    for (const [id, client] of this.clients.entries()) {
-      await client.disconnect();
-      this.clients.delete(id);
-    }
+    await Promise.all(Array.from(this.clients, ([, c]) => c.disconnect()));
+    this.clients.clear();
   }
 }
