@@ -1,39 +1,26 @@
 import {Constant, Inject, OnDestroy, Service} from "@tsed/di";
 import {Logger} from "@tsed/logger";
-import {createClient, RedisClientOptions, RedisClientType} from "redis";
-import type {RedisClientOptionsWithId} from "../interfaces";
+import type {IORedisClient, NodeRedisClient, RedisClient, RedisProvider, WithId, WithProvider} from "../interfaces";
 
 @Service()
 export class RedisService implements OnDestroy {
-  private readonly clients: Map<string, RedisClientType> = new Map();
+  private readonly clients: Map<string, RedisClient<RedisProvider>> = new Map();
   private defaultConnection: string = "default";
 
   @Inject()
   logger: Logger;
 
   @Constant("redis")
-  redisOptions: RedisClientOptions | RedisClientOptionsWithId[];
-
+  redisOptions: WithProvider<RedisProvider> | WithProvider<RedisProvider, WithId<RedisProvider>>[];
 
   async $onDestroy() {
     await this.close();
   }
 
-  async connect(id: string, options: RedisClientOptions, isDefault: boolean = false): Promise<RedisClientType> {
-    let client = this.get(id);
-    if (client && client.isReady) {
-      return client;
-    }
-
-    this.logger.info(`Connect to redis ${id}`);
-    this.logger.debug(`Options: ${JSON.stringify(options)}`);
-
-    client = <RedisClientType>createClient(options);
-
-    if (!client) {
-      this.logger.error("Could not create redis client");
-      process.exit();
-    }
+  async _nodeRedisConnect(settings: WithId<"redis">): Promise<RedisClient<"redis">> {
+    const {createClient} = await import("redis");
+    const {id, ...opts} = settings;
+    const client = createClient(opts);
 
     client.once("error", (err) => {
       this.logger.error(`Connection to redis ${id} was failed`);
@@ -47,6 +34,54 @@ export class RedisService implements OnDestroy {
 
     await client.connect();
 
+    return client;
+  }
+
+  async _ioRedisConnect(settings: WithId<"ioredis">): Promise<RedisClient<"ioredis">> {
+    const {Redis} = await import("ioredis");
+    const {id, ...opts} = settings;
+
+    const reconnectOnError = (err: any) => {
+      this.logger.error(`Connection to ioredis ${id} was failed`);
+      this.logger.error(err);
+      process.exit();
+    };
+
+    const client = new Redis({
+      ...opts,
+      reconnectOnError,
+      lazyConnect: true
+    });
+
+    await client.connect();
+
+    this.logger.info(`Connection to ioredis ${id} is ready`);
+
+    return client;
+  }
+
+  async connect<O extends WithProvider<P, WithId<P>>, P extends RedisProvider = RedisProvider>(
+    id: string,
+    options: O,
+    isDefault: boolean = false
+  ): Promise<RedisClient<P>> {
+    let client = this.get<P>(id);
+    const isReady = (client as NodeRedisClient)?.isReady || (client as IORedisClient)?.status === "ready";
+    if (client && isReady) {
+      return client as RedisClient<P>;
+    }
+
+    switch (options.provider) {
+      case "redis":
+        client = (await this._nodeRedisConnect(options as WithId<"redis">)) as RedisClient<P>;
+        break;
+      case "ioredis":
+        client = (await this._ioRedisConnect(options as WithId<"ioredis">)) as RedisClient<P>;
+        break;
+      default:
+        throw new Error(`Redis provider ${options.provider} not supported`);
+    }
+
     if (id === "default" || isDefault) {
       this.defaultConnection = id;
     }
@@ -56,8 +91,8 @@ export class RedisService implements OnDestroy {
     return client;
   }
 
-  get(id?: string): RedisClientType | undefined {
-    return this.clients.get(id || this.defaultConnection);
+  get<P extends RedisProvider>(id?: string): RedisClient<P> | undefined {
+    return this.clients.get(id || this.defaultConnection) as RedisClient<P>;
   }
 
   has(id?: string): boolean {

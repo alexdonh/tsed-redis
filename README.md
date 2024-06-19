@@ -4,30 +4,56 @@ Simple Redis DI factory for Ts.ED framework
 
 ## Goals
 
-Just kind of a wrapper to [redis](https://github.com/redis/node-redis) for Ts.ED framework. With support of multiple connections.
+Just kind of a wrapper to [redis](https://github.com/redis/node-redis) or [ioredis](https://github.com/redis/ioredis) for Ts.ED framework. With support of multiple connections.
 
 ## Installation
 
 ```sh
-npm install tsed-redis redis
+npm install tsed-redis
 // or yarn
-yarn add tsed-redis redis
+yarn add tsed-redis
 ```
 
-(Yes, redis is a must!)
+It now supports both `redis` v4+ and `ioredis` v5+. You will have to install one of those optional dependencies as your choice!
+
+```sh
+npm install redis@^3.1.2
+// or yarn
+yarn add redis@^3.1.2
+```
+
+or
+
+```sh
+npm install ioredis@^5.4.1
+// or yarn
+yarn add ioredis@^5.4.1
+```
 
 ## Usage
 
 ```typescript
 import "tsed-redis";
+import type { WithProvider, WithId } from "tsed-redis";
 
 @Configuration({
   ...
-  redis: {
-    url: "redis://localhost:6379",
+  // can be redis options
+  redis: <WithProvider<"redis", WithId<"redis">>>{
+    provider: "redis"
+    url: "redis://localhost:6379"
     // <other redis configurations>
   }
-  // or multiple connections (id is required)
+  
+  // or ioredis config
+  // redis: <WithProvider<"ioredis", WithId<"ioredis">>>{
+  //   provider: "ioredis"
+  //   host: "localhost",
+  //   port: 6379
+  //   // <other ioredis configurations>
+  // }
+
+  // or even multiple connections (id is required)
   // redis: [
   //   {
   //     id: "foo",
@@ -35,7 +61,8 @@ import "tsed-redis";
   //   },
   //   {
   //     id: "bar",
-  //     url: "...",
+  //     host: "...",
+  //     port: ...
   //   }
   // ]
 })
@@ -44,7 +71,9 @@ export class Server {
 }
 ```
 
-More redis configuration can be found [here](https://github.com/redis/node-redis/blob/master/docs/client-configuration.md).
+Check their documentation for more configurations:
+- [redis](https://github.com/redis/node-redis/blob/master/docs/client-configuration.md)
+- [ioredis](https://redis.github.io/ioredis/index.html#RedisOptions)
 
 Then, in service code you will `@Inject` redis service like this:
 
@@ -61,7 +90,8 @@ export class HelloWorldController {
   async get() {
     // get a redis connection, provide `id` to get a specific connection
     // id must match with what was specified in configuration.
-    const client = this.redisService.get();
+    // must supply a provider type `redis` or `ioredis`
+    const client = this.redisService.get<"ioredis">();
     // use redis API set
     await client?.set("foo", "bar");
     // and get
@@ -76,13 +106,14 @@ export class HelloWorldController {
 
 - [Me](https://github.com/alexdonh)
 - [Ts.ED](https://github.com/tsedio/tsed) for the awesome Typescript framework
-- [Redis for Node.js](https://github.com/redis/node-redis)
+- [Node-Redis](https://github.com/redis/node-redis)
+- [ioredis](https://github.com/redis/ioredis)
 
 ## License
 
 MIT License
 
-Copyright (c) 2021 Alex Do
+Copyright (c) 2021-2024 Alex Do
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
